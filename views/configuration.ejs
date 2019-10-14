@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Validage Configuration</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+    <h1><%= title %></h1>
+    <form id="validageForm" name="validageForm" method="post" action="/addKey">
+      <input id="inputPublicKey" type="text" placeholder="Public Key" name="publicKey" value="<%= currentPublicKey %>" />
+      <textarea rows="1" cols="50" name="secretKey" form="validageForm"  placeholder="Secret Key" ><%= currentSecretKey %></textarea>
+      <button id="btnSubmit" type="submit">Submit</button>
+    </form>
+  </body>
+</html>

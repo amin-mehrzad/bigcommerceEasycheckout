@@ -6,7 +6,7 @@ var logger = require('morgan');
 
 //mongoDB
 var monk = require('monk');
-var db = monk('localhost:27017/nodetest1');
+var db = monk('0.tcp.ngrok.io:14025/validage');
 
 var auth = require('./routes/auth');
 var load = require('./routes/load');
@@ -21,7 +21,7 @@ var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'hbs');
+app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -90,10 +90,13 @@ const options = {
 
 
 
+app.post('/addKey', function (req, res) {
+   console.log('----------------------------------------------------------------------');
+   console.log(req.body);
+ });
 
 
-
-app.post('*', function (req, res) {
+app.post('/', function (req, res) {
   console.log('----------------------------------------------------------------------');
   console.log(req.body);
   var orderid = req.body.data.id;
