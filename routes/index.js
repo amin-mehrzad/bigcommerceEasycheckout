@@ -42,7 +42,7 @@ router.post('/addKey', function (req, res) {
         }
         else {
           // And forward to success page   
-          res.render('configuration', { title: "Validage Configuration", currentPublicKey: publicKey, currentSecretKey: secretKey });
+          res.render('configuration', { title: "Validage Configuration", currentPublicKey: publicKey, currentSecretKey: secretKey , successAlert:"visible" });
         }
       });
   

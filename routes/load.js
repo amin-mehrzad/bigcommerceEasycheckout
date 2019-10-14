@@ -40,7 +40,7 @@ router.get('/', (req, res, next) => {
                 var secretKey = keys.secretKey;
                 var publicKey = keys.publicKey;
             }
-            res.render('configuration', { title: "Validage Configuration", currentPublicKey: publicKey, currentSecretKey: secretKey });
+            res.render('configuration', { title: "Validage Configuration", currentPublicKey: publicKey, currentSecretKey: secretKey, successAlert:"invisible"});
 
         });
 
