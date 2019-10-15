@@ -7,7 +7,7 @@ const bigCommerce = new BigCommerce({
 });
 
 
-
+var something=1111111111111;
 
 router.get('/', (req, res, next) => {
     try {
@@ -29,7 +29,8 @@ router.get('/', (req, res, next) => {
             console.log(doc[0]);
 
             keys = doc[0];
-
+            
+            something=keys.websiteKey
            // console.log(keys.websiteKey);
 
             // Get values frm DB
@@ -43,7 +44,8 @@ router.get('/', (req, res, next) => {
             res.render('configuration', { title: "Validage Configuration", currentPublicKey: publicKey, currentSecretKey: secretKey, successAlert:"invisible"});
 
         });
-
+        console.log('***********************************************');
+setTimeout(function () {console.log(something)},3000);
 
 
     } catch (err) {

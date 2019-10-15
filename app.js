@@ -6,7 +6,7 @@ var logger = require('morgan');
 
 //mongoDB
 var monk = require('monk');
-var db = monk('0.tcp.ngrok.io:14025/validage');
+var db = monk('0.tcp.ngrok.io:19249/validage');
 
 var auth = require('./routes/auth');
 var load = require('./routes/load');
@@ -70,7 +70,7 @@ const https = require('https')
 
 const data = JSON.stringify({
   scope: "store/order/statusUpdated",
-  destination: "https://409e4de0.ngrok.io/",
+  destination: "https://fc64c7de.ngrok.io/",
   is_active: true
 })
 
