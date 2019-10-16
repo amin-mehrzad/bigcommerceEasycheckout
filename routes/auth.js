@@ -1,6 +1,7 @@
 const express = require('express');
 router = express.Router();
 BigCommerce = require('node-bigcommerce');
+const https = require('https');
 
 const bigCommerce = new BigCommerce({
     clientId: 'ne9vzqqdj8x8rxni55z6j2c361zlfdd',
@@ -14,7 +15,7 @@ router.get('/', (req, res, next) => {
     var websiteKey;
     var accessToken;
     var myPromise = function (websiteKey, accessToken) {
-        return   new Promise(function (resolve, reject) {
+        return new Promise(function (resolve, reject) {
             //do something, fetch something....
             //you guessed it, mongo queries go here.
             db.collection('usercollection').update({ "websiteKey": websiteKey }, {
@@ -45,10 +46,42 @@ router.get('/', (req, res, next) => {
 
             websiteKey = contextArray[1];
             accessToken = data['access_token'];
-            myPromise(websiteKey,accessToken).then(function (value) {
+            myPromise(websiteKey, accessToken).then(function (value) {
                 console.log(data);
-                console.log(value)
-                res.render('auth', { title: ['Valid','Age'] })
+                console.log(value);
+                const webhookRegisterData = JSON.stringify({
+                    scope: "store/order/statusUpdated",
+                    destination: "https://fc64c7de.ngrok.io/",
+                    is_active: true
+                })
+
+                const options = {
+                    hostname: 'api.bigcommerce.com',
+                    path: `/${data['context']}/v2/hooks/`,
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Auth-Token': accessToken,
+                        'X-Auth-Client': 'rnocx3o086g0zb0py2d9i9d8v6jxnha'
+                    }
+                }
+
+                const req = https.request(options, res => {
+                    console.log(`statusCode: ${res.statusCode}`)
+
+                    res.on('data', d => {
+                        process.stdout.write(d)
+                    })
+                })
+
+                req.on('error', error => {
+                    console.error(error)
+                })
+                req.write(webhookRegisterData)
+                req.end()
+
+                res.render('auth', { title: ['Valid', 'Age'] })
             });
 
 

@@ -32,7 +32,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 // Make our db accessible to our router
-app.use(function(req,res,next){
+app.use(function (req, res, next) {
   req.db = db;
   next();
 });
@@ -47,53 +47,35 @@ app.use('/load', load);
 app.use('/uninstall', uninstall);
 
 
+var findStoreRecord = function (websiteKey) {
+  return new Promise(function (resolve, reject) {
+    //do something, fetch something....
+    //you guessed it, mongo queries go here.
+    db.collection('usercollection').find({ "websiteKey": websiteKey })
+      .then(function (res) {
+        resolve(res);
+        // console.log("xxx");
+      })
+    //I can continue to process my result inside my promise
+    if (false) { reject('aasdasdas'); }
 
-
-
-// var orderid;
-var orderProducer;
-
-
-
-
-// if(typeof orderid !== 'undefined' || orderid !== null){
-//   console.log('------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!----------------'); 
-
-// app.get(`https://api.bigcommerce.com/${orderProducer}/v2/orders/${orderid}`, function (req, res) {
-//   console.log(req);
-// });
-// }
-
-
-
-const https = require('https')
-
-const data = JSON.stringify({
-  scope: "store/order/statusUpdated",
-  destination: "https://fc64c7de.ngrok.io/",
-  is_active: true
-})
-
-const options = {
-  hostname: 'api.bigcommerce.com',
-  path: '/stores/dvaj2lzwfc/v2/hooks/',
-  method: 'POST',
-  headers: {
-    'Accept': 'application/json',
-    'Content-Type': 'application/json',
-    'X-Auth-Token': 'sfbv9bokthgc9t7wnuzwgfet6n6x63z',
-    'X-Auth-Client': 'rnocx3o086g0zb0py2d9i9d8v6jxnha'
-  }
+  });
 }
 
 
 
 
 
+const https = require('https')
+
+
+
+
+
 app.post('/addKey', function (req, res) {
-   console.log('----------------------------------------------------------------------');
-   console.log(req.body);
- });
+  console.log('----------------------------------------------------------------------');
+  console.log(req.body);
+});
 
 
 app.post('/', function (req, res) {
@@ -101,113 +83,149 @@ app.post('/', function (req, res) {
   console.log(req.body);
   var orderid = req.body.data.id;
   var orderProducer = req.body.producer;
-  console.log(orderProducer);
-  const orderOptions = {
-    hostname: 'api.bigcommerce.com',
-    path: `/${orderProducer}/v2/orders/${orderid}`,
-    method: 'GET',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'X-Auth-Token': 'sfbv9bokthgc9t7wnuzwgfet6n6x63z',
-      'X-Auth-Client': 'rnocx3o086g0zb0py2d9i9d8v6jxnha'
-    }
-  }
-  const reqOrder = https.request(orderOptions, resp => {
-    console.log(`statusCode: ${resp.statusCode}`)
+  splitedOrderProducer = orderProducer.split("/");
+  var websiteKey = splitedOrderProducer[1];
+  console.log(websiteKey);
 
-    resp.on('data', d => {
-      process.stdout.write(d)
+  findStoreRecord(websiteKey).then(function (websiteData) {
+    console.log(websiteData[0].accessToken);
 
-      const orderData = JSON.parse(d);
-      console.log(orderData)
-
-
-      var cartToken = orderData.cart_id;
-      var date = orderData.date_created;
-      var totalPrice = orderData.total_inc_tax;
-      var orderID = orderData.id;
-
-      const validageData = JSON.stringify({
-        order: {
-          id: orderID,
-          tags: "hold",
-          note: "Pending veification",
-          created_at: date,
-          total_price: totalPrice,
-          order_data: orderData
-        },
-  
-        session_id: cartToken,
-        website_version: "BigCommerce"
-      })
-  
-      const validageOptions = {
-        hostname: 'cloud.validage.com',
-        path: '/person/easycheck_bigcommerce',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+    const orderOptions = {
+      hostname: 'api.bigcommerce.com',
+      path: `/${orderProducer}/v2/orders/${orderid}`,
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'X-Auth-Token': websiteData[0].accessToken,
+        'X-Auth-Client': 'rnocx3o086g0zb0py2d9i9d8v6jxnha'
       }
+    }
+    const reqOrder = https.request(orderOptions, resp => {
+      console.log(`statusCode: ${resp.statusCode}`)
 
-      const reqValidage = https.request(validageOptions, resp => {
-        console.log(`statusCode: ${resp.statusCode}`)
-    
-        resp.on('data', d => {
-          // resObj = JSON.parse(d);
-          // code=resObj.code;
-          // cyaCode=resObj.cya_code;
-          // message=resObj.message;
-          // cyaStatus=resObj.cya_status;
-          // cyaMessage=resObj.cya_message;
-  
-         // state = d.order_status; //tag
-         // status = d.order_message; //note
-  
-          process.stdout.write(d)
+      resp.on('data', d => {
+        process.stdout.write(d)
+
+        const orderData = JSON.parse(d);
+        console.log(orderData)
 
 
+        var cartToken = orderData.cart_id;
+        var date = orderData.date_created;
+        var totalPrice = orderData.total_inc_tax;
+        var orderID = orderData.id;
+        var orderStatus = orderData.status;
+        var orderShippingAPI = orderData.shipping_addresses.resource
+
+        console.log(orderShippingAPI);
+
+        const shippingAdressesOption = {
+          hostname: 'api.bigcommerce.com',
+          path: `/${orderProducer}/v2/orders/${orderShippingAPI}`,
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-Auth-Token': websiteData[0].accessToken,
+            'X-Auth-Client': 'rnocx3o086g0zb0py2d9i9d8v6jxnha'
+          }
+        }
+        const reqShippingAdd = https.request(shippingAdressesOption, respo => {
+          console.log(`statusCode: ${respo.statusCode}`)
+
+          respo.on('data', dd => {
+            process.stdout.write(dd)
+
+
+            const validageData = JSON.stringify({
+              order: {
+                order_number: orderID,
+                order_status: orderStatus,
+                note: "Pending veification",
+                order_date: date,
+                order_total: totalPrice,
+                order_data: orderData,
+                order_billing: "orderData.billing_adderess",
+                order_shipping: "orderData.shippingAdresses"
+              },
+
+              session_id: cartToken,
+              website_version: "BigCommerce",
+              website_key: websiteData[0].publicKey
+            })
+
+            const validageOptions = {
+              hostname: 'cloud.validage.com',
+              path: '/person/easycheck_bigcommerce',
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            }
+
+            const reqValidage = https.request(validageOptions, resp => {
+              console.log(`statusCode: ${resp.statusCode}`)
+
+              resp.on('data', d => {
+                // resObj = JSON.parse(d);
+                // code=resObj.code;
+                // cyaCode=resObj.cya_code;
+                // message=resObj.message;
+                // cyaStatus=resObj.cya_status;
+                // cyaMessage=resObj.cya_message;
+
+                // state = d.order_status; //tag
+                // status = d.order_message; //note
+
+                process.stdout.write(d)
+
+
+              })
+            })
+            reqValidage.on('error', error => {
+              console.error(error)
+            })
+
+
+            reqValidage.write(validageData)
+            reqValidage.end()
+
+
+
+          })
         })
+          reqShippingAdd.on('error', error => {
+            console.error(error)
+          })
+
+
+          //reqOrder.write()
+          reqShippingAdd.end()
+       
       })
-      reqValidage.on('error', error => {
-        console.error(error)
-      })
-    
-    
-      reqValidage.write(validageData)
-      reqValidage.end()
+        reqOrder.on('error', error => {
+          console.error(error)
+        })
+  
+  
+        //reqOrder.write()
+        reqOrder.end()
+
+      });
 
 
 
-    })
-  })
-  reqOrder.on('error', error => {
-    console.error(error)
-  })
 
+   
 
-  //reqOrder.write()
-  reqOrder.end()
+  });
 
 });
 
 
-const req = https.request(options, res => {
-  console.log(`statusCode: ${res.statusCode}`)
-
-  res.on('data', d => {
-    process.stdout.write(d)
-  })
-})
-
-req.on('error', error => {
-  console.error(error)
-})
 
 
-req.write(data)
-req.end()
 
 
 
