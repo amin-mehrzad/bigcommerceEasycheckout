@@ -120,9 +120,9 @@ app.post('/', function (req, res) {
 
         console.log(orderShippingAPI);
 
-        const shippingAdressesOption = {
+        const shippingAddressOption = {
           hostname: 'api.bigcommerce.com',
-          path: `/${orderProducer}/v2/orders/${orderShippingAPI}`,
+          path: `/${orderProducer}/v2${orderShippingAPI}`,
           method: 'GET',
           headers: {
             'Accept': 'application/json',
@@ -131,23 +131,25 @@ app.post('/', function (req, res) {
             'X-Auth-Client': 'rnocx3o086g0zb0py2d9i9d8v6jxnha'
           }
         }
-        const reqShippingAdd = https.request(shippingAdressesOption, respo => {
+        const reqShippingAdd = https.request(shippingAddressOption, respo => {
           console.log(`statusCode: ${respo.statusCode}`)
 
-          respo.on('data', dd => {
-            process.stdout.write(dd)
+          respo.on('data', shippingData => {
+            process.stdout.write(shippingData)
+
+            const shippingAddress = JSON.parse(shippingData);
+            console.log(orderData.billing_address)
 
 
             const validageData = JSON.stringify({
               order: {
                 order_number: orderID,
                 order_status: orderStatus,
-                note: "Pending veification",
                 order_date: date,
                 order_total: totalPrice,
                 order_data: orderData,
-                order_billing: "orderData.billing_adderess",
-                order_shipping: "orderData.shippingAdresses"
+                order_billing: orderData.billing_address,
+                order_shipping: shippingAddress[0]
               },
 
               session_id: cartToken,
@@ -161,6 +163,7 @@ app.post('/', function (req, res) {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
+                'authorization':`Bearer ${websiteData[0].secretKey}`
               }
             }
 
@@ -195,29 +198,30 @@ app.post('/', function (req, res) {
 
           })
         })
-          reqShippingAdd.on('error', error => {
-            console.error(error)
-          })
-
-
-          //reqOrder.write()
-          reqShippingAdd.end()
-       
-      })
-        reqOrder.on('error', error => {
+        reqShippingAdd.on('error', error => {
           console.error(error)
         })
-  
-  
+
+
         //reqOrder.write()
-        reqOrder.end()
+        reqShippingAdd.end()
 
-      });
+      })
+    })
+    reqOrder.on('error', error => {
+      console.error(error)
+    })
+
+
+    //reqOrder.write()
+    reqOrder.end()
 
 
 
 
-   
+
+
+
 
   });
 
