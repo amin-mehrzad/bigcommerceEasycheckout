@@ -141,7 +141,7 @@ app.post('/', function (req, res) {
             console.log(orderData.billing_address)
 
 
-            const validageData = JSON.stringify({
+            const validageData = {
               order: {
                 order_number: orderID,
                 order_status: orderStatus,
@@ -155,7 +155,7 @@ app.post('/', function (req, res) {
               session_id: cartToken,
               website_version: "BigCommerce",
               website_key: websiteData[0].publicKey
-            })
+            }
 
             const validageOptions = {
               hostname: 'cloud.validage.com',
@@ -163,10 +163,13 @@ app.post('/', function (req, res) {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'authorization':`Bearer ${websiteData[0].secretKey}`
+                'Authorization':`Bearer ${websiteData[0].secretKey}`
               }
             }
 
+
+            console.log(validageData);
+            console.log(validageData);
             const reqValidage = https.request(validageOptions, resp => {
               console.log(`statusCode: ${resp.statusCode}`)
 
@@ -191,7 +194,7 @@ app.post('/', function (req, res) {
             })
 
 
-            reqValidage.write(validageData)
+            reqValidage.write(JSON.stringify(validageData))
             reqValidage.end()
 
 
