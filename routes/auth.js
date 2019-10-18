@@ -20,8 +20,8 @@ router.get('/', (req, res, next) => {
             //you guessed it, mongo queries go here.
             db.collection('usercollection').update({ "websiteKey": websiteKey }, {
                 $set: {
-                    "publicKey": "publicKeyy",
-                    "secretKey": "secretKey",
+                    "publicKey": "",
+                    "secretKey": "",
                     "websiteKey": websiteKey,
                     "accessToken": accessToken
                 }
@@ -51,11 +51,11 @@ router.get('/', (req, res, next) => {
                 console.log(value);
                 const webhookRegisterData = JSON.stringify({
                     scope: "store/order/statusUpdated",
-                    destination: "https://fc64c7de.ngrok.io/",
+                    destination: "https://fc64c7de.ngrok.io/webhooks",
                     is_active: true
                 })
 
-                const options = {
+                const webhookOptions = {
                     hostname: 'api.bigcommerce.com',
                     path: `/${data['context']}/v2/hooks/`,
                     method: 'POST',
@@ -67,7 +67,7 @@ router.get('/', (req, res, next) => {
                     }
                 }
 
-                const req = https.request(options, res => {
+                const reqWebhook = https.request(webhookOptions, res => {
                     console.log(`statusCode: ${res.statusCode}`)
 
                     res.on('data', d => {
@@ -75,11 +75,74 @@ router.get('/', (req, res, next) => {
                     })
                 })
 
-                req.on('error', error => {
+                reqWebhook.on('error', error => {
                     console.error(error)
                 })
-                req.write(webhookRegisterData)
-                req.end()
+                reqWebhook.write(webhookRegisterData)
+                reqWebhook.end()
+
+                
+                const jQueryScriptData = JSON.stringify({
+                    name: "jQuery",
+                    description : "This script loads jQuery library to checkout page",
+                    html: "<script src='https://code.jquery.com/jquery-3.3.1.min.js' integrity='sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=' crossorigin='anonymous'></script>",
+                    auto_uninstall : true,
+                    load_method : "default",
+                    location : "head",
+                    visibility : "checkout",
+                    kind : "script_tag"
+                })
+                const checkoutScriptData = JSON.stringify({
+                    name: "Validage checkout",
+                    description : "Pop-up age validation for checkout",
+                    html: "<script src='https://cloud.validage.com/cache/BigCommerce.js' type='text/javascript'></script>",
+                    auto_uninstall : true,
+                    load_method : "default",
+                    location : "head",
+                    visibility : "checkout",
+                    kind : "script_tag"
+                })
+
+                const scriptOptions = {
+                    hostname: 'api.bigcommerce.com',
+                    path: `/${data['context']}/v3/content/scripts`,
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-Auth-Token': accessToken,
+                        'X-Auth-Client': 'rnocx3o086g0zb0py2d9i9d8v6jxnha'
+                    }
+                }
+
+                const reqScript2 = https.request(scriptOptions, res => {
+                    console.log(`statusCode: ${res.statusCode}`)
+
+                    res.on('data', d => {
+                        process.stdout.write(d)
+                    })
+                })
+
+                reqScript2.on('error', error => {
+                    console.error(error)
+                })
+                reqScript2.write(jQueryScriptData)
+                reqScript2.end()
+
+                const reqScript3 = https.request(scriptOptions, res => {
+                    console.log(`statusCode: ${res.statusCode}`)
+
+                    res.on('data', d => {
+                        process.stdout.write(d)
+                    })
+                })
+
+                reqScript3.on('error', error => {
+                    console.error(error)
+                })
+                reqScript3.write(checkoutScriptData)
+                reqScript3.end()
+                
 
                 res.render('auth', { title: ['Valid', 'Age'] })
             });
