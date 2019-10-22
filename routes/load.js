@@ -6,17 +6,13 @@ const bigCommerce = new BigCommerce({
     responseType: 'json'
 });
 
-
-var something=1111111111111;
-
 router.get('/', (req, res, next) => {
     try {
         const data = bigCommerce.verify(req.query['signed_payload']);
 
-
         console.log(data);
 
-        global.websiteKey = data.store_hash;
+        websiteKey = data.store_hash;
 
         // Set our internal DB variable
         var db = req.db;
@@ -25,13 +21,11 @@ router.get('/', (req, res, next) => {
         var collection = db.get('usercollection');
 
         // Find website record
-        collection.find({ websiteKey: global.websiteKey }, {}, function (e, doc) {
+        collection.find({ websiteKey: websiteKey }, {}, function (e, doc) {
             console.log(doc[0]);
 
             keys = doc[0];
-            
-            something=keys.websiteKey
-           // console.log(keys.websiteKey);
+            accessToken = keys.accessToken;
 
             // Get values frm DB
             if (typeof keys === 'undefined') {
@@ -41,11 +35,9 @@ router.get('/', (req, res, next) => {
                 var secretKey = keys.secretKey;
                 var publicKey = keys.publicKey;
             }
-            res.render('configuration', { title: "Validage Configuration", currentPublicKey: publicKey, currentSecretKey: secretKey, successAlert:"invisible"});
+            res.render('configuration', { title: "Validage Configuration", currentPublicKey: publicKey, currentSecretKey: secretKey, alert: "invisible",message:"" });
         });
         console.log('***********************************************');
-setTimeout(function () {console.log(something)},3000);
-
 
     } catch (err) {
         next(err);

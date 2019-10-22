@@ -41,7 +41,7 @@
         </div>
 
         <div class="d-flex flex-column-reverse">
-            <form id="validageForm" name="validageForm" method="post" action="/addKey">
+            <form id="validageForm" name="validageForm" method="post" action="/addKey"  >
                 <div class="form-group">
                     <label for="inputPublicKey">Public Key</label>
                     <input class="form-control" id="inputPublicKey" type="text" placeholder="Public Key"
@@ -69,8 +69,8 @@
         
     </div>
     <div class="container mt-4">
-            <div class="alert alert-success <%= successAlert %>" role="alert">
-                New Information Saved Successfully.
+            <div class="alert <%= alert %>" role="alert">
+                <%= message %>
             </div>
         </div>
 

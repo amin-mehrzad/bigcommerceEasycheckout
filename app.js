@@ -11,13 +11,11 @@ var db = monk('0.tcp.ngrok.io:19249/validage');
 var auth = require('./routes/auth');
 var load = require('./routes/load');
 var uninstall = require('./routes/uninstall');
-
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-
-
 
 var app = express();
+const https = require('https')
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -29,23 +27,16 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-
 // Make our db accessible to our router
 app.use(function (req, res, next) {
   req.db = db;
   next();
 });
 
-
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
-
-
 app.use('/auth', auth);
 app.use('/load', load);
 app.use('/uninstall', uninstall);
-
 
 var findStoreRecord = function (websiteKey) {
   return new Promise(function (resolve, reject) {
@@ -54,28 +45,12 @@ var findStoreRecord = function (websiteKey) {
     db.collection('usercollection').find({ "websiteKey": websiteKey })
       .then(function (res) {
         resolve(res);
-        // console.log("xxx");
       })
     //I can continue to process my result inside my promise
     if (false) { reject('aasdasdas'); }
 
   });
 }
-
-
-
-
-
-const https = require('https')
-
-
-
-
-
-app.post('/addKey', function (req, res) {
-  console.log('----------------------------------------------------------------------');
-  console.log(req.body);
-});
 
 
 app.post('/webhooks', function (req, res) {
@@ -116,6 +91,7 @@ app.post('/webhooks', function (req, res) {
         var totalPrice = orderData.total_inc_tax;
         var orderID = orderData.id;
         var orderStatus = orderData.status;
+        var orderStatus_id = orderData.status_id;
         var orderShippingAPI = orderData.shipping_addresses.resource
 
         console.log(orderShippingAPI);
@@ -163,7 +139,7 @@ app.post('/webhooks', function (req, res) {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
-                'Authorization':`Bearer ${websiteData[0].secretKey}`
+                'Authorization': `Bearer ${websiteData[0].secretKey}`
               }
             }
 
@@ -174,15 +150,46 @@ app.post('/webhooks', function (req, res) {
               console.log(`statusCode: ${resp.statusCode}`)
 
               resp.on('data', d => {
-                // resObj = JSON.parse(d);
+                resObj = JSON.parse(d);
                 // code=resObj.code;
-                // cyaCode=resObj.cya_code;
+                var cyaCode = resObj.cya_code;
                 // message=resObj.message;
                 // cyaStatus=resObj.cya_status;
                 // cyaMessage=resObj.cya_message;
 
                 // state = d.order_status; //tag
                 // status = d.order_message; //note
+                if (cyaCode == 401 && orderStatus_id != 12) {
+                  const changeStatusData = {
+                    status_id: 12
+                  }
+
+                  const changeStatusOptions = {
+                    hostname: 'api.bigcommerce.com',
+                    path: `/${orderProducer}/v2/orders/${orderid}`,
+                    method: 'PUT',
+                    headers: {
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json',
+                      'X-Auth-Token': websiteData[0].accessToken,
+                      'X-Auth-Client': 'rnocx3o086g0zb0py2d9i9d8v6jxnha'
+                    }
+                  }
+
+                  const reqChangeStatus = https.request(changeStatusOptions, respChangeStatus => {
+                    console.log(`statusCode: ${resp.statusCode}`)
+
+                    respChangeStatus.on('data', d => {
+                      process.stdout.write(d)
+                    })
+                  })
+                  reqChangeStatus.on('error', error => {
+                    console.error(error)
+                  })
+                  reqChangeStatus.write(JSON.stringify(changeStatusData))
+                  reqChangeStatus.end()
+
+                }
 
                 process.stdout.write(d)
 
@@ -219,23 +226,9 @@ app.post('/webhooks', function (req, res) {
     //reqOrder.write()
     reqOrder.end()
 
-
-
-
-
-
-
-
   });
 
 });
-
-
-
-
-
-
-
 
 
 // catch 404 and forward to error handler
